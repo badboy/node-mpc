@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>node-mpc</title>
+    <meta content='initial-scale=1.0, width=device-width' name='viewport' />
+    <style type="text/css">
+        body { font-family: sans-serif; }
+        .error {
+            background-color: #fcc; border: 1px solid #c66;
+            text-align: center; display:none;
+        }
+        .error p { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="error"><p></p></div>
+
+    <div id="controls">
+      <a href="#previous">«</a>
+      <a href="#play">Play</a>
+      <a href="#pause">Pause</a>
+      <a href="#stop">Stop</a>
+      <a href="#next">»</a>
+      <a href="#status">Status</a>
+      <a href="#volume|+5">Volume+</a>
+      <a href="#volume|-5">Volume-</a>
+      <a href="#stats">Info</a>
+      <span id="volume"></span>
+    </div>
+
+    <span id="state"></span>
+    <span id="currentsong"></span>
+    <span id="time"></span>
+
+    <div id="stats"></div>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script src="/ext/underscore.js"></script>
+    <script src="ext/socket.io/socket.io.js"></script>
+    <!-- We use require.js for loading dependencies http://requirejs.org/ -->
+    <script src="ext/require.js"></script>
+    <script>
+      require({
+        baseUrl: "./",
+        paths: {
+          "mpc": "/lib"
+        },
+      },
+      ["mpc/app"],
+      function(app) {
+        app.start();
+      }
+      );
+    </script>
+  </body>
+</html>
