@@ -12,34 +12,55 @@
         }
         .error p { margin: 0; }
     </style>
+    <link rel="stylesheet/less" type="text/css" href="css/mpc.less" media="screen,projection,print" />
+    <script src="ext/less-1.0.35.min.js"></script>
+    <!--
+    We use less.js: http://github.com/cloudhead/less.js/tree/  -->
+    <script>
+      less.refresh(true); // localstorage caching is bad for frequent releases
+    </script>
   </head>
   <body>
-    <div class="error"><p></p></div>
+    <div id="container">
+      <div id="header">
+        <h1 id="logo"><a href="#" target="_self">node-mpc</a></h1>
+        <div id="meta">
+          <span id="playtime">[n/a]</span> |
+          <span id="volume">Volume: n/a</span>
+        </div>
+        <ul id="controls">
+          <li><a title="Previous" href="#previous">«</a></li>
+          <li class="playpause"><a title="Play" href="#play">▸</a></li>
+          <li><a title="Stop" href="#stop">■</a></li>
+          <li><a title="Next" href="#next">»</a></li>
+          <!--<li><a title="Status" href="#status">?</a></li>-->
+          <li><a title="Volume down" href="#volume/-5">♪</a></li>
+          <li><a title="Volume up" href="#volume/+5">♬</a></li>
+          <li><a title="Stats" href="#stats">⚙</a></li>
+          <li><a title="Stats" href="#status">S</a></li>
+          <li class="repeat toggle off"><a title="Repeat" href="#repeat/1">♻</a></li>
+          <li class="random toggle off"><a title="Random" href="#random/1">⚛</a></li>
+        </ul>
+      </div>
 
-    <div id="controls">
-      <a href="#previous">«</a>
-      <a href="#play">Play</a>
-      <a href="#pause">Pause</a>
-      <a href="#stop">Stop</a>
-      <a href="#next">»</a>
-      <a href="#status">Status</a>
-      <a href="#volume|+5">Volume+</a>
-      <a href="#volume|-5">Volume-</a>
-      <a href="#stats">Info</a>
-      <span id="volume"></span>
+      <div id="content">
+        <div class="error"><p></p></div>
+
+        <ol id="stream">
+          <li class="tweet stats gap">
+            <div class="status">
+              <h3 class="h state">Stats:</h3>
+              <p class="text"></p>
+            </div>
+          </li>
+        </ol>
+      </div>
+
     </div>
-
-    <span id="state"></span>
-    <span id="currentsong"></span>
-    <span id="time"></span>
-
-    <div id="stats"></div>
-
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
     <script src="/ext/underscore.js"></script>
-    <script src="ext/socket.io/socket.io.js"></script>
+    <script src="/ext/socket.io/socket.io.js"></script>
     <!-- We use require.js for loading dependencies http://requirejs.org/ -->
-    <script src="ext/require.js"></script>
+    <script src="/ext/require.js"></script>
     <script>
       require({
         baseUrl: "./",
