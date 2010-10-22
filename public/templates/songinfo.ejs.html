@@ -1,0 +1,8 @@
+<li class="tweet entry pos<%=pos %><%= pos==current?' current':'' %>">
+  <a href="#play/<%=pos %>"><img src="/images/note.png" alt="Titel <%=pos+1 %>" width="48" height="48" class="profile_image_url"></a>
+  <div class="status">
+    <h3 class="h state"><%= pos==current?lastState:'' %></h3>
+    <p class="text"><%= display %></p>
+    <div class="time"><%= time %></div>
+  </div>
+</li>

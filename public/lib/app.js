@@ -12,8 +12,10 @@ if(typeof console == "undefined") {
   }
 }
 require.def("mpc/app",
-  ["mpc/client", "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"],
-  function(client) {
+  ["mpc/client", "text!../templates/songinfo.ejs.html", "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"],
+  function(client, templateText) {
+
+    var template = _.template(templateText);
 
     return {
       start: function () {
@@ -32,15 +34,91 @@ require.def("mpc/app",
             return "<strong>"+txt+"</strong>";
           }
 
+          function formatSong(song) {
+            var str = ''
+            if(song.Artist) {
+              str += song.Artist
+            }
+            if(song.Title) {
+              if(str.length > 0) {
+                str += " - ";
+              }
+              str += song.Title;
+            }
+            if(str.length == 0) {
+              if(song.Name) {
+                str = song.Name;
+              } else {
+                str = song.file;
+              }
+            }
+
+            var time = '';
+            var hours = (song.Time / 60 / 60)|0;
+            var mins  = (song.Time / 60 % 60)|0;
+            var secs = (song.Time % 60)|0;
+
+            if(hours == 0 && mins == 0 && secs == 0) {
+              time = '';
+            } else {
+              if(hours > 0) {
+                time += hours+':';
+                if(mins < 10) time += "0";
+              }
+              time += mins+":";
+              time += (secs < 10 ? "0" : '')+secs;
+            }
+
+            return {'display': str, 'time': time, 'pos': Number(song.Pos), 'id': Number(song.Id)};
+          }
+
+          function formatState(state) {
+            var a = $(".playpause a");
+            var txt;
+            if(state == "play") {
+              txt = "Playing:";
+              a.attr("href", "#pause");
+              a.text("=");
+              a.parent().addClass('pause');
+            }
+            else if(state == "pause") {
+              txt = "[Paused]";
+              a.attr("href", "#play");
+              a.text("▸");
+              a.parent().removeClass('pause');
+            }
+            else {
+              txt = "[Stopped]";
+              a.attr("href", "#play");
+              a.text("▸");
+              a.parent().removeClass('pause');
+            }
+            return txt;
+          }
+
           var updateInterval;
           var mpd_version = '0';
+          var currentSongId;
+          var lastState = "play";
 
           $("#controls").delegate("a", "click", function(e) {
             e.preventDefault();
             var a = $(this);
             var action = a.attr('href').substr(1);
-            if(action.indexOf('|') != -1) {
-              action = action.split("|").join(" ");
+            console.log("clicked: "+action);
+            if(action.indexOf('/') != -1) {
+              action = action.split("/").join(" ");
+            }
+            websocketSend({'command': action});
+          });
+
+          $("#stream").delegate("a", "click", function(e) {
+            e.preventDefault();
+            var a = $(this);
+            var action = a.attr('href').substr(1);
+            console.log("tweet.clicked: "+action);
+            if(action.indexOf('/') != -1) {
+              action = action.split("/").join(" ");
             }
             websocketSend({'command': action});
           });
@@ -48,7 +126,7 @@ require.def("mpc/app",
           $(".error").bind('click', function(e) {
             $(this).hide();
           });
-          $("#stats").bind('click', function(e) {
+          $(".stats").bind('click', function(e) {
             $(this).hide();
           });
 
@@ -67,18 +145,17 @@ require.def("mpc/app",
             }
             else if(data == "connected") {
               statusUpdate();
-              updateInterval = setInterval(statusUpdate, 25000);
+              websocketSend({'command': "playlistinfo"});
+              //updateInterval = setInterval(statusUpdate, 25000);
             }
             else if(data == "idle_connected") {
               websocketSend({'command': 'idle'});
             }
             else if(data == "OK") {
-              console.log(data);
               statusUpdate();
             }
             else if(data.error) {
               $(".error p").text(data.error).parent().show();
-              console.log(data.error);
             }
             else if(data.version) {
               mpd_version = data.version;
@@ -87,33 +164,55 @@ require.def("mpc/app",
             else if(data.response) {
               data = data.response;
 
+              if(data.songinfo) {
+                var stream = $("#stream");
+                _(data.songinfo).each(function(song) {
+                  var songi = formatSong(song);
+                  songi["current"] = currentSongId;
+                  songi["lastState"] = formatState(lastState);
+                  var html = template(songi);
+                  stream.append(html);
+                });
+              }
+
               if(data.file) {
-                var str = ''
-                if(data.Artist) {
-                  str += data.Artist
+                $(".tweet .state").text("");
+
+                if(currentSongId) {
+                  $(".pos"+currentSongId).removeClass("current");
+                  $(".pos"+currentSongId+" .state").text("");
+                  $(".pos"+data.Pos).addClass("current");
+                  $(".current .state").text(formatState(lastState));
                 }
-                if(data.Title) {
-                  str += " - "+data.Title;
-                }
-                if(str.length == 0 && data.Name) {
-                  str = data.Name;
-                }
-                else {
-                  str = data.file;
-                }
-                str = (Number(data.Pos)+1) + '. ' + str;
-                $("#currentsong").text(str);
+                currentSongId = data.Pos;
               }
 
               if(data.state) {
-                if(data.state == "play") {
-                  $("#state").text("Playing: ");
+                lastState = data.state;
+                $(".current .state").text(formatState(lastState));
+              }
+
+              if(data.random) {
+                var a = $(".random a");
+                if(data.random == 1) {
+                  a.parent().removeClass("off");
+                  a.parent().addClass("on");
+                  a.attr("href", "#random/0");
+                } else {
+                  a.parent().removeClass("on");
+                  a.parent().addClass("off");
+                  a.attr("href", "#random/1");
                 }
-                else if(data.state == "pause") {
-                  $("#state").text("[Paused] ");
-                }
-                else {
-                  $("#state").text("[Stopped] ");
+              }
+
+              if(data.repeat) {
+                var a = $(".repeat a");
+                if(data.repeat == 1) {
+                  a.parent().addClass("on");
+                  a.attr("href", "#repeat/0");
+                } else {
+                  a.parent().removeClass("on");
+                  a.attr("href", "#repeat/1");
                 }
               }
 
@@ -130,7 +229,7 @@ require.def("mpc/app",
                 var elapsed_text = mins+":"+(secs<10?'0':'')+secs;
                 var total_text   = t_mins+":"+(t_secs<10?'0':'')+t_secs;
 
-                $("#time").text("[" + elapsed_text + (total==0?'':(" / " + total_text)) + "]");
+                $("#meta #playtime").text("["+elapsed_text + (total==0?'':(" / " + total_text))+"]");
               }
 
               if(data.volume) {
@@ -140,6 +239,10 @@ require.def("mpc/app",
               // idle invoked
               if(data.changed) {
                 websocketSend({'command': 'idle'});
+                if(data.changed == "playlist") {
+                  $("#stream li.entry").remove();
+                  websocketSend({'command': 'playlistinfo'});
+                }
                 statusUpdate();
               }
 
@@ -155,7 +258,7 @@ require.def("mpc/app",
                 hour = (playtime / 60 / 60 % 60)|0;
                 min  = (playtime / 60 % 60)|0;
                 sec  = (playtime % 60)|0;
-                var cur_playtime = hour+":"+min+":"+sec;
+                var cur_playtime = hour+":"+(min<10?"0":"")+min+":"+(sec<10?"0":"")+sec;
 
                 var s = ''
                 s += strong('Version: ') + mpd_version + "<br/>";
@@ -165,10 +268,10 @@ require.def("mpc/app",
 
                 s += strong('Artist names: ') + data.artists + "<br/>";
                 s += strong('Album names: ') + data.albums + "<br/>";
-                s += strong('Songs in databse: ') + data.songs + "<br/>";
-                s += "<br/>";
+                s += strong('Songs in database: ') + data.songs;
 
-                $("#stats").html(s).show();
+                $(".stats .text").html(s);
+                $(".stats").toggle();
               }
             }
             else {
@@ -179,7 +282,7 @@ require.def("mpc/app",
             }
           };
           client.connect(connect, connected);
-        })
+        });
       }
     }
   }
