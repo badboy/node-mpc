@@ -104,26 +104,26 @@ socket.on('connection', function(client) {
     }
     else if(data.mpd_host || data.mpd_port) {
       mpd = net.createConnection(data.mpd_port || 6600, data.mpd_host || 'localhost');
-      mpd.addListener('connect', function() {
+      mpd.on('connect', function() {
         console.log("Connected to mpd on "+(data.mpd_host||'localhost')+':'+(data.mpd_port||6600));
         send('connected');
       });
 
       mpd_idle = net.createConnection(data.mpd_port || 6600, data.mpd_host || 'localhost');
-      mpd_idle.addListener('connect', function() {
+      mpd_idle.on('connect', function() {
         console.log("Second connection to mpd established (for 'idle' support)");
         send('idle_connected');
       });
-      mpd_idle.addListener('data', function(data) {
+      mpd_idle.on('data', function(data) {
         mpd.emit('data', [data]);
       });
 
-      mpd.addListener('end', function(data) {
+      mpd.on('end', function(data) {
         if(client.writable) {
           send({'fatalError':'Connection to mpd closed'});
         }
       });
-      mpd_idle.addListener('end', function(data) {
+      mpd_idle.on('end', function(data) {
         if(client.writable) {
           send({'fatalError':'Connection to mpd closed'});
         }
@@ -131,7 +131,7 @@ socket.on('connection', function(client) {
 
       var buffer = "";
 
-      mpd.addListener('data', function(data) {
+      mpd.on('data', function(data) {
         data = data.toString('utf8');
         if(md = data.match(/^OK MPD (\d+\.\d+\.\d+)\n/)) {
           console.log("mpd returned version "+md[1]);
