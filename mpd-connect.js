@@ -46,46 +46,59 @@ socket.on('connection', function(client) {
   console.log("Connection from "+client.sessionId);
 
   var mpd, mpd_idle;
+  var lastCommand = [];
 
-  function mpdSend(data) {
-    mpd.write(data + "\n");
+  function mpdSend(data, idle) {
+    if(idle)
+      mpd_idle.write(data + "\n");
+    else
+      mpd.write(data + "\n");
   };
 
   // We always send JSON
   function send(data) {
+    console.log(data);
     client.send(JSON.stringify(data))
   }
 
   // If buffer is filled, handle the data and send the response.
-  function handleData(data) {
+  function handleData(data, fromIdle) {
     var songinfo = false;
     var dat = {};
-    var lines = data.split("\n");
+
+    var command;
+    if(fromIdle) {
+      command = "idle";
+    } else {
+      command = lastCommand.shift();
+    }
 
     // We got some songinfo (from 'playlistinfo' command or similar)
-    if(lines[0].split(": ")[0] == "file") {
+    if(command == "playlistinfo") {
       songinfo = true;
       dat.songinfo = [];
     }
 
+    var lines = data.split("\n");
     lines.forEach(function(e) {
       if(e != "OK" && e != '') {
         d = e.split(": ");
         key = d[0];
         value = d[1];
         if(songinfo) {
-          var l = dat.songinfo.length;
+          var l = dat.songinfo.length || 1;
           if(key == "file") {
-            // Be sure to send every 5 entries. Easier to handle then a load of data.
+            // Be sure to send every 6 entries. Easier to handle then a load of data.
+            // TODO: test this against a playlist of 2000 or more entries.
             if(l > 5) {
-              send({'response': dat});
+              var d = {};
+              d[command] = dat;
+              send(d);
               dat.songinfo = [];
             }
-            var dd = {};
-            dd[key] = value;
-            dat.songinfo.push(dd);
-          }
-          else {
+            dat.songinfo.push({file: value});
+
+          } else {
             dat.songinfo[l-1][key] = value;
           }
         } else {
@@ -93,7 +106,48 @@ socket.on('connection', function(client) {
         }
       }
     });
-    send({'response': dat});
+    var d = {};
+    d[command] = dat;
+    send(d);
+  }
+
+  var buffer = "";
+  function parseData(data, fromIdle) {
+    if(md = data.match(/^OK MPD (\d+\.\d+\.\d+)\n/)) {
+      console.log("mpd returned version "+md[1]);
+      send({'version': md[1] });
+    }
+    else {
+      // ACK [5@0] {} unknown command "command"
+      if(data.match(/ACK \[(\d+)@(\d+)\] {(.*)} (.+)/)) {
+        console.log("error: "+data);
+        send({'error': data});
+        lastCommand.shift();
+      } else {
+        if(buffer == "" && data == "OK\n") { // just received "OK\n" → everything is fine.
+          send('OK');
+          lastCommand.shift();
+        } else {
+          var ind;
+
+          // because we're sending a load of commands to mpd,
+          // it may occur that we receive just text without any "OK" on one run
+          // next time even 2 ore more "OK"s might be in the data string.
+          //
+          // So we split at every "OK\n" and handle them separately.
+          while((ind = data.indexOf("OK\n")) > -1) {
+            var d = data.substr(0, ind);
+            data = data.substr(ind+3);
+            buffer += d;
+            handleData(buffer, fromIdle);
+            buffer = "";
+          }
+          if(data.length > 0) {
+            buffer += data;
+          }
+        }
+      }
+    }
   }
 
   client.on('message', function(msg){
@@ -115,7 +169,10 @@ socket.on('connection', function(client) {
         send('idle_connected');
       });
       mpd_idle.on('data', function(data) {
-        mpd.emit('data', [data]);
+        data = data.toString('utf8');
+        console.log("got data from idle:");
+        console.log(data);
+        parseData(data, true);
       });
 
       mpd.on('end', function(data) {
@@ -129,40 +186,24 @@ socket.on('connection', function(client) {
         }
       });
 
-      var buffer = "";
 
       mpd.on('data', function(data) {
         data = data.toString('utf8');
-        if(md = data.match(/^OK MPD (\d+\.\d+\.\d+)\n/)) {
-          console.log("mpd returned version "+md[1]);
-          send({'version': md[1] });
-        }
-        else {
-          if(data.match(/ACK \[(\d+)@(\d+)\] {(.*)} (.+)/)) {
-            console.log("error: "+data);
-            send({'error': data});
-          } else {
-            if(buffer == "" && data == "OK\n") { // just received "OK\n" → everything is fine.
-              send('OK');
-            } else {
-              var l = data.length;
-              // received everything → start working.
-              if(data.substr(l-3) == "OK\n") {
-                buffer += data;
-                handleData(buffer);
-                buffer = "";
-              } else {
-                buffer += data;
-              }
-            }
-          }
-        }
+
+        parseData(data);
       });
     }
+    // Client sent a command, proxy it!
     else if(data.command) {
-      console.log("got command: "+data.command);
-      if(data.command == "idle") { // special case because of second socket connection
-        mpd_idle.write("idle\n");
+      // idle goes straight to the second socket
+      // and does not return immediate.
+      if(data.command != "idle") {
+        lastCommand.push(data.command.toString());
+      }
+
+      // special case because of second socket connection
+      if(data.command == "idle") {
+        mpdSend("idle", true);
       }
       else if(typeof data.command == 'object') { // got an array here → send command_list
         var d = "command_list_begin\n"+
