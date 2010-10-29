@@ -23,8 +23,8 @@ The client is fully working, but the code needs some cleanup.
 
 * Code Cleanup!
 * Configurable. Not everyone has mpd running on localhost:6600 and most of them are even secured by password.
-* Simple search.
-* Playlist resorting.
+* ...
+* See [TODO](http://github.com/badboy/node-mpc/blob/master/TODO)
 
 ## Setup ##
 

@@ -1,0 +1,6 @@
+* Strip LESS files to only what's really needed.
+* Display Cover (fetch from Amazon / read embedded from file)
+* Test with large playlist
+* Design Tweaks
+* Simple search
+* Playlist resorting
