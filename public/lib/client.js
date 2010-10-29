@@ -84,28 +84,28 @@ require.def("mpc/client",
         }
       });
 
-      function ping() { // send a ping every N seconds
-        connected = false;
-        socket.send(JSON.stringify('ping'));
-        if(pingTimeout) {
-          clearTimeout(pingTimeout);
-        }
-        pingTimeout = setTimeout(function () { // if within 3 seconds there was no pong we assume the socket is gone and reconnect
-          if(!connected) {
-            clearInterval(interval);
-            connectFail++;
-            socket.disconnect(); // just making sure
-            console.log("[Connect] Reconnecting after connection failure");
-            connect(cb);
-          }
-        }, 10000)
-      }
+      //function ping() { // send a ping every N seconds
+        //connected = false;
+        //socket.send(JSON.stringify('ping'));
+        //if(pingTimeout) {
+          //clearTimeout(pingTimeout);
+        //}
+        //pingTimeout = setTimeout(function () { // if within 3 seconds there was no pong we assume the socket is gone and reconnect
+          //if(!connected) {
+            //clearInterval(interval);
+            //connectFail++;
+            //socket.disconnect(); // just making sure
+            //console.log("[Connect] Reconnecting after connection failure");
+            //connect(cb);
+          //}
+        //}, 10000)
+      //}
 
-      if(interval) {
-        clearInterval(interval);
-      }
-      interval = setInterval(ping, 5000);
-      ping();
+      //if(interval) {
+        //clearInterval(interval);
+      //}
+      //interval = setInterval(ping, 5000);
+      //ping();
 
       return socket;
     }
