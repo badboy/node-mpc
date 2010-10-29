@@ -1,0 +1,37 @@
+<% var h = helpers.html; %>
+<div id="overlayed" style="background-color:black;position:absolute;height:90%;width:450px;float:left;opacity:0.8">
+  <p style="opacity:1;color:red;font-size:4em;margin:50px;">not yet working</p>
+</div>
+<form id="settingsForm" action="#">
+  <h2 class="h3">about:config</h2>
+  <div class="namespaces">
+  <% settings.namespaces().forEach(function (ns) { %>
+  <fieldset>
+    <legend class="h4"><%=h(ns.name)%></legend>
+    <% ns.keys().forEach(function (key) { %>
+    <% var value = settings.get(ns.name, key), name  = "settings."+ns.name+"."+key; %>
+    <% var values = ns.settings[key].values; %>
+    <div class="formrow">
+      <label>
+        <% if( typeof value == "boolean" ){ %>
+          <input name="<%=h(name)%>" id="<%=h(name)%>" class="setting" type="checkbox" <%= value ? 'checked' : ''  %> />
+          <%}else if( typeof value == "string" || typeof value == "number" ) { %>
+          <input name="<%=h(name)%>" id="<%=h(name)%>" class="setting" type="text" value="<%=h(value)%>" />
+        <% }else if( jQuery.isPlainObject(values) ){ %>
+          <select name="<%=h(name)%>" id="<%=h(name)%>" class="setting">
+            <% _.keys(values).forEach(function(x){ %>
+              <option value="<%=h(x)%>"  <%= (x == value) ? 'selected' : ''  %> ><%=h(values[x])%></option>           
+            <% }); %>
+          </select>
+        <% }else{ %>
+          <% console.assert(false); %>
+        <% } %>
+        <%= h(ns.settings[key].label) %>
+      </label>      
+    </div>
+    <% });%>
+  </fieldset>
+  <% }); %>
+  </div>
+  <input type="button" value="Close" class="button close">
+</form>
