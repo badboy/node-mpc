@@ -139,12 +139,12 @@ require.def("mpc/app",
             }
             else if(data == "connected") {
               connectionCount++;
-              console.log("we're connected, let's start "+connectionCount);
+              console.log("we're connected");
               //updateInterval = setInterval(statusUpdate, 25000);
             }
             else if(data == "idle_connected") {
               connectionCount++;
-              console.log("we're connected to the idle connection, let's start "+connectionCount);
+              console.log("we're connected to the idle connection.");
             }
             else if(data == "OK") {
               statusUpdate();
