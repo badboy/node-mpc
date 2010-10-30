@@ -250,8 +250,8 @@ require.def("mpc/commandplugins",
           s += strong('Album names: ') + data.albums + "<br/>";
           s += strong('Songs in database: ') + data.songs;
 
-          $(".stats .text").html(s);
-          $(".stats").toggle();
+          $(".stats-info .text").html(s);
+          $(".stats-info").toggle();
         }
       },
 

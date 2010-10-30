@@ -116,7 +116,7 @@ require.def("mpc/app",
           $(".error").bind('click', function(e) {
             $(this).hide();
           });
-          $(".stats").bind('click', function(e) {
+          $(".stats-info").bind('click', function(e) {
             $(this).hide();
           });
 
