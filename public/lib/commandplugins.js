@@ -201,8 +201,12 @@ require.def("mpc/commandplugins",
           if(lastXFade != Number(data.xfade)) {
             lastXFade = Number(data.xfade);
             if(data.xfade == "0") {
+              $(".crossfade").removeClass("on");
+              $(".crossfade a").attr('title', "Crossfade off");
               showInfo("Crossfade is off");
             } else {
+              $(".crossfade").addClass("on");
+              $(".crossfade a").attr('title', "Crossfade: "+data.xfade+"s");
               showInfo("Crossfade set to "+data.xfade+" seconds.");
             }
           }
