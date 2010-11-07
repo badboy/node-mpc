@@ -19,6 +19,14 @@ I took over the \*.less files with just some small modifications, but I didn't r
 
 The client is fully working, but the code needs some cleanup.
 
+## What does it look like?
+
+Because not everyone got mpd and/or node installed and is willing to install it just for node-mpc, here is a screenshot of it's interface:
+
+![node-mpc design](/badboy/node-mpc/raw/master/node-mpc-07-11-2010.png)
+
+And I made a small video, too. [See it on vimeo](http://vimeo.com/16316326).
+
 ## ToDo ##
 
 * Code Cleanup!
