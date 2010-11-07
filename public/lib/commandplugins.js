@@ -4,15 +4,18 @@
  */
 
 require.def("mpc/commandplugins",
-  ["text!../templates/songinfo.ejs.html"],
-  function(templateText) {
+  ["text!../templates/songinfo.ejs.html", "text!../templates/searched_songinfo.ejs.html"],
+  function(templateText, searchedTemplateText) {
     var template = _.template(templateText);
+    var searchedTemplate = _.template(searchedTemplateText);
 
     var mpd_version = "0.0.0";
     var lastState = "play";
     var lastXFade = 0;
 
     var changedPlaylist = false;
+
+    var searchResults = 0;
 
     var pauseSymbol = "=";
     var playSymbol = "▸";
@@ -121,7 +124,7 @@ require.def("mpc/commandplugins",
 
     var currentSongId;
     function setCurSong(pos) {
-      $(".tweet .state").text("");
+      $(".entry .state").text("");
 
       if(currentSongId) {
         $(".pos"+currentSongId).removeClass("current");
@@ -155,6 +158,7 @@ require.def("mpc/commandplugins",
             $("#stream li.entry").remove();
           }
           var stream = $("#stream");
+
           _(data.songinfo).each(function(song) {
             var songi = formatSong(song);
             songi["current"] = currentSongId;
@@ -162,6 +166,9 @@ require.def("mpc/commandplugins",
             var html = template(songi);
             stream.append(html);
           });
+          if($(".search").hasClass("active")) {
+            $("#stream .entry").hide();
+          }
         }
       },
 
@@ -250,8 +257,8 @@ require.def("mpc/commandplugins",
           s += strong('Album names: ') + data.albums + "<br/>";
           s += strong('Songs in database: ') + data.songs;
 
-          $(".stats-info .text").html(s);
-          $(".stats-info").toggle();
+          $("#stats-info .text").html(s);
+          $("#stats-info").toggle();
         }
       },
 
@@ -268,6 +275,8 @@ require.def("mpc/commandplugins",
       handleTime: {
         match: "status",
         func: function handleTime(data) {
+          if(!data.time) return;
+
           var time = data.time.split(":");
           PLAYTIME.elapsed = time[0];
           var total        = time[1];
@@ -296,6 +305,36 @@ require.def("mpc/commandplugins",
         match: "status",
         func: function handleVolume(data) {
           $("#volume").text("Volume: "+data.volume+"%");
+        }
+      },
+
+      handleSearch: {
+        match: "search",
+        func: function handleSearch(data) {
+          if(data == "OK") {
+            showInfo("Nothing found.");
+            return;
+          }
+
+          var args = data._arguments;
+          var category = args[0];
+          var query = args.slice(1).join(" ");
+
+          searchResults += data.songinfo.length;
+          var searchFor = "Search for '"+query+"' ("+searchResults+" results):"
+
+          $(".search-head h3").text(searchFor).parent().show();
+
+          $(".entry").hide();
+          var stream = $("#stream");
+          _(data.songinfo).each(function(song) {
+            var songi = formatSong(song);
+            //songi["text"] = searchFor;
+            songi["path"] = encodeURIComponent('"'+song.file+'"');
+
+            var html = searchedTemplate(songi);
+            stream.append(html);
+          });
         }
       },
     }

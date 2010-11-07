@@ -43,6 +43,7 @@ require.def("mpc/app",
       commandPlugin.handleRandom,
       commandPlugin.handleChanged,
       commandPlugin.handleStats,
+      commandPlugin.handleSearch
     ];
 
     function showInfo(msg) {
@@ -73,12 +74,13 @@ require.def("mpc/app",
           var lastState = "play";
 
           $("#controls > .control").delegate("a", "click", function(e) {
-            e.preventDefault();
+            //e.preventDefault();
             var a = $(this);
             var action = a.attr('href').substr(1);
             if(action.indexOf('/') != -1) {
-              action = action.split("/").join(" ");
+              action = _(action.split("/")).map(function(e){ return decodeURIComponent(e)}).join(" ");
             }
+            //console.log("action is: "+action);
             if(a.parent().hasClass('crossfade')) {
               var xfade = prompt("Crossfade time: ");
               if(xfade) {
@@ -88,6 +90,9 @@ require.def("mpc/app",
                   websocketSend({'command': "crossfade "+xfade});
                 }
               }
+            } else if(action.indexOf("search") == 0) {
+              var query = prompt("Search for: ");
+              websocketSend({'command': 'search any "'+decodeURIComponent(query)+'"'});
             } else {
               websocketSend({'command': action});
             }
@@ -98,7 +103,10 @@ require.def("mpc/app",
             var a = $(this);
             var action = a.attr('href').substr(1);
             if(action.indexOf('/') != -1) {
-              action = action.split("/").join(" ");
+              action = _(action.split("/")).map(function(e){ return decodeURIComponent(e)}).join(" ");
+            }
+            if(action.indexOf("add ") == 0) {
+              a.parent().addClass("added");
             }
             websocketSend({'command': action});
           });
@@ -116,8 +124,23 @@ require.def("mpc/app",
           $(".error").bind('click', function(e) {
             $(this).hide();
           });
-          $(".stats-info").bind('click', function(e) {
+          $("#stats-info").bind('click', function(e) {
             $(this).hide();
+          });
+
+          $(".search").bind('click', function(e) {
+            $(".searched").remove();
+            if(!$(this).hasClass('active')) {
+              $(this).addClass('active');
+            }
+          });
+
+          $(".search-head span.close a").bind('click', function(e) {
+            e.preventDefault();
+            $(".search").removeClass('active');
+            $(".searched").remove();
+            $(".entry").show();
+            $(".search-head").hide();
           });
 
           var socket;
@@ -156,12 +179,20 @@ require.def("mpc/app",
             else {
               var key = Object.keys(data)[0];
               //console.log("Received `"+key+"'")
+              var found = 0;
               commandPlugins.forEach(function (plugin) {
                 if(key.indexOf(plugin.match) == 0) {
                   //console.log(plugin.func.name+" matches data");
+                  found++;
                   plugin.func.call(function () {}, data[key], {send: _websocketSend}, plugin);
                 }
               });
+
+              //console.log("Found "+found+" plugins to handle '"+key+"'.");
+              if(found == 0) {
+                console.log(data);
+                console.log("^ nothing to handle ^");
+              }
             }
 
             if(connectionCount == 2) {

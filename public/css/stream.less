@@ -25,8 +25,20 @@
             &:hover{
                 z-index:1;
             }
-            &.stats-info{
+            &.search-head{
                 display:none;
+                h3 {
+                  font-size: 1.5em;
+                  font-weight: bold;
+                }
+                span.close {
+                  float: right;
+                  position: relative;
+                  top: -20px;
+                  font-size: 1.5em;
+                  color: red;
+                  padding-right: 10px;
+                }
             }
             &.new{
                 -webkit-animation-name: fadein;
@@ -137,10 +149,8 @@
                                 background-color:@client-red;
                             }
                         }
-                        &.favorite{
-                            &:after{
-                                content:"☆";
-                            }
+                        &.delete{
+                            color: red;
                         }
                         &.retweet{
                             bottom:-1px;
@@ -213,7 +223,7 @@
                 }
               }
             }
-            &.direct{
+            &.searched{
               .status{
                 //border-color:@client-color-dm !important;
                 background-color:@client-color-dm;
@@ -223,6 +233,11 @@
                 &:after{
                     border-right-color:@client-color-dm;
                 }
+              }
+            }
+            &.added{
+              .status{
+                background-color:#17a102;
               }
             }
             &.starred{
@@ -272,7 +287,7 @@
                   }
 
                 }
-                &.direct{
+                &.searched{
                   .status{
                         &:after{
                             border-color:transparent transparent transparent @client-color-dm;
@@ -346,7 +361,7 @@ html.no-utf8{
                                     background-position:center -210px;
                                 }
                             }
-                            &.favorite{
+                            &.delete{
                                 background-position:center -87px;
                                 &:hover{
                                     background-position:center -238px;

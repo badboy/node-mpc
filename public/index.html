@@ -46,19 +46,31 @@
           <li class="control repeat toggle off"><a title="Repeat" href="#repeat/1">♻</a></li>
           <li class="control random toggle off"><a title="Random" href="#random/1">⚛</a></li>
           <li class="control crossfade toggle off"><a title="Crossfade" href="#crossfade">x</a></li>
+          <li class="control search"><a style="-webkit-transform: rotate(-180deg)" title="Search" href="#search">☌</a></li>
         </ul>
         <div id="settings" class="panel"></div>
+      </div>
+
+      <div id="stats-info">
+        <h3>MPD Server Info</h3>
+        <p class="text">
+          <strong>Version: </strong>0.15.0<br>
+          <strong>Uptime: </strong>3h, 9min, 45s<br>
+          <strong>Time playing: </strong>48:53<br>
+          <br>
+          <strong>Artist names: </strong>1038<br>
+          <strong>Album names: </strong>398<br>
+          <strong>Songs in database: </strong>3811
+        </p>
       </div>
 
       <div id="content">
         <div class="error"><p></p></div>
 
         <ol id="stream">
-          <li class="tweet stats-info gap">
-            <div class="status">
-              <h3 class="h state">Stats:</h3>
-              <p class="text"></p>
-            </div>
+          <li class="tweet search-head gap">
+            <h3>Search for "":</h3>
+            <span class="close"><a title="close search" href="#">x</a></span>
           </li>
         </ol>
       </div>

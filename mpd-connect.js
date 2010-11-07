@@ -47,6 +47,7 @@ socket.on('connection', function(client) {
 
   var mpd, mpd_idle;
   var lastCommand = [];
+  var lastArguments = [];
 
   function mpdSend(data, idle) {
     if(idle)
@@ -57,7 +58,7 @@ socket.on('connection', function(client) {
 
   // We always send JSON
   function send(data) {
-    console.log(data);
+    //console.log(data);
     client.send(JSON.stringify(data))
   }
 
@@ -67,14 +68,17 @@ socket.on('connection', function(client) {
     var dat = {};
 
     var command;
+    var args;
     if(fromIdle) {
       command = "idle";
     } else {
       command = lastCommand.shift();
+      args = lastArguments.shift();
     }
 
     // We got some songinfo (from 'playlistinfo' command or similar)
-    if(command == "playlistinfo") {
+    var songInfoCommands = [ "playlistinfo", "search" ];
+    if(songInfoCommands.indexOf(command) != -1) {
       songinfo = true;
       dat.songinfo = [];
     }
@@ -93,6 +97,7 @@ socket.on('connection', function(client) {
             if(l > 5) {
               var d = {};
               d[command] = dat;
+              d[command]._arguments = args;
               send(d);
               dat.songinfo = [];
             }
@@ -108,6 +113,7 @@ socket.on('connection', function(client) {
     });
     var d = {};
     d[command] = dat;
+    d[command]._arguments = args;
     send(d);
   }
 
@@ -125,8 +131,9 @@ socket.on('connection', function(client) {
         lastCommand.shift();
       } else {
         if(buffer == "" && data == "OK\n") { // just received "OK\n" → everything is fine.
-          send('OK');
-          lastCommand.shift();
+          var d = {};
+          d[lastCommand.shift()] = "OK";
+          send(d);
         } else {
           var ind;
 
@@ -170,8 +177,8 @@ socket.on('connection', function(client) {
       });
       mpd_idle.on('data', function(data) {
         data = data.toString('utf8');
-        console.log("got data from idle:");
-        console.log(data);
+        //console.log("got data from idle:");
+        //console.log(data);
         parseData(data, true);
       });
 
@@ -195,10 +202,16 @@ socket.on('connection', function(client) {
     }
     // Client sent a command, proxy it!
     else if(data.command) {
+      var commandSplitted = data.command.toString().split(" ");
+
       // idle goes straight to the second socket
       // and does not return immediate.
       if(data.command != "idle") {
-        lastCommand.push(data.command.toString());
+        lastCommand.push(commandSplitted[0]);
+        if(commandSplitted.length > 1)
+          lastArguments.push(commandSplitted.slice(1));
+        else
+          lastArguments.push([]);
       }
 
       // special case because of second socket connection

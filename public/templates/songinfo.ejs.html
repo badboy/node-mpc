@@ -1,8 +1,11 @@
 <li class="tweet entry pos<%=pos %><%= pos==current?' current':'' %>">
-  <a href="#play/<%=pos %>"><img src="/images/note.png" alt="Titel <%=pos+1 %>" width="48" height="48" class="profile_image_url"></a>
+  <a href="#play/<%=pos %>" title="Play Song No. <%=pos+1 %>"><img src="/images/note.png" alt="Titel <%=pos+1 %>" width="48" height="48" class="profile_image_url"></a>
   <div class="status">
     <h3 class="h state"><%= pos==current?lastState:'' %></h3>
     <p class="text"><%= display %></p>
     <div class="time"><%= time %></div>
+    <ul class="actions">
+      <li title="Delete" class="delete" tabindex="0"><a href="#deleteid/<%=id %>">x</a></li>
+    </ul>
   </div>
 </li>
